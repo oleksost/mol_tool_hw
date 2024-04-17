@@ -26,19 +26,19 @@ class SMILESEnergyPredictionTool(BaseTool):
                     as it helps in understanding how a potential drug molecule interacts with water, which is crucial 
                     for its absorption, distribution, metabolism, and excretion (ADME) properties."""
     model: AutoSklearnRegressor
-    
+
     def __init__(self, model_path: str) -> None:
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found at {model_path}")
         with open(model_path, "rb") as f:
-            model:AutoSklearnRegressor = pickle.load(f)
+            model: AutoSklearnRegressor = pickle.load(f)
         super().__init__(model=model)
 
     def _run(
         self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None
-    ) -> str:   
+    ) -> str:
         calc = FPCalculator("ecfp")
-        input_x = pd.DataFrame(calc(query)[None,:])
+        input_x = pd.DataFrame(calc(query)[None, :])
         input_x.columns = [f"{i}" for i in range(input_x.shape[1])]
         return self.model.predict(input_x)[0]
 
@@ -47,6 +47,7 @@ class SMILESEnergyPredictionTool(BaseTool):
     ) -> str:
         """Use the tool asynchronously."""
         raise NotImplementedError("custom_search does not support async")
+
 
 class QaAgent:
     """
@@ -60,7 +61,8 @@ class QaAgent:
     """
 
     def __init__(
-        self, documents, llm, embeddings_provider, doc_limit = None, vector_path=None) -> None:
+        self, documents, llm, embeddings_provider, doc_limit=None, vector_path=None
+    ) -> None:
         # check if file exists
         if vector_path and os.path.exists(vector_path):
             self.vector = FAISS.load_local(
@@ -71,9 +73,7 @@ class QaAgent:
             documents = text_splitter.split_documents(documents)
             if doc_limit:
                 documents = documents[:doc_limit]
-            self.vector = FAISS.from_documents(
-                documents, embedding=embeddings_provider
-            )
+            self.vector = FAISS.from_documents(documents, embedding=embeddings_provider)
             if vector_path:
                 self.vector.save_local(vector_path)
 

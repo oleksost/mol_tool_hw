@@ -10,6 +10,7 @@ from sklearn.metrics import mean_absolute_error, roc_auc_score
 
 smiles_column = "smiles"
 
+
 def _preprocess(row):
 
     dm.disable_rdkit_log()
@@ -18,7 +19,12 @@ def _preprocess(row):
     mol = dm.fix_mol(mol)
     mol = dm.sanitize_mol(mol, sanifix=True, charge_neutral=False)
     mol = dm.standardize_mol(
-        mol, disconnect_metals=False, normalize=True, reionize=True, uncharge=False, stereo=True
+        mol,
+        disconnect_metals=False,
+        normalize=True,
+        reionize=True,
+        uncharge=False,
+        stereo=True,
     )
 
     row["standard_smiles"] = dm.standardize_smiles(dm.to_smiles(mol))
@@ -45,19 +51,27 @@ def get_data(dest="storage/_freesolv_encoded.csv"):
         X_encoded = pd.DataFrame(X_encoded)
         # save on disk
         pd.concat([X_encoded, y], axis=1).to_csv(dest, index=False)
-        
+
     X_train, X_test, y_train, y_test = train_test_split(X_encoded, y, random_state=0)
     return X_train, X_test, y_train, y_test
 
+
 def main(model_path="storage/_autosklearn_model.pkl"):
     X_train, X_test, y_train, y_test = get_data()
-    print("train sahpes:", X_train.shape, y_train.shape, "\n Test shapes:",X_test.shape, y_test.shape)
-    
+    print(
+        "train sahpes:",
+        X_train.shape,
+        y_train.shape,
+        "\n Test shapes:",
+        X_test.shape,
+        y_test.shape,
+    )
+
     automl = AutoSklearnRegressor(
-        memory_limit=24576, 
-        # For practicality’s sake, limit this to 5 minutes! 
+        memory_limit=24576,
+        # For practicality’s sake, limit this to 5 minutes!
         # (x3 = 15 min in total)
-        time_left_for_this_task=180,  
+        time_left_for_this_task=180,
         n_jobs=1,
         seed=1,
     )
@@ -67,9 +81,11 @@ def main(model_path="storage/_autosklearn_model.pkl"):
     print("MAE:", mae)
     # save the model with pickle
     import pickle
+
     with open(model_path, "wb") as f:
         pickle.dump(automl, f)
     print("Model saved at:", model_path)
-    
+
+
 if __name__ == "__main__":
     main()
