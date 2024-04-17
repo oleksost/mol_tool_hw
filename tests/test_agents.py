@@ -20,9 +20,9 @@ def test_qa_agent():
 
 
 def test_smiles_filter_agent():
-    from agents import SmilesFilterAgent
+    from agents import SmilesFilter
 
-    smiles_filter = SmilesFilterAgent()
+    smiles_filter = SmilesFilter()
     smiles_tokens = smiles_filter.filter("blabla bla ADFAD C1=CC=CC=C1")
     assert smiles_tokens == ["C1=CC=CC=C1"]
 

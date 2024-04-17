@@ -1,4 +1,6 @@
 import os
+import pickle
+import pandas as pd
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -7,7 +9,44 @@ from langchain.chains import create_retrieval_chain
 import backoff
 from rdkit import Chem
 import concurrent.futures
+from typing import Optional, Type
+from autosklearn.regression import AutoSklearnRegressor
+from langchain.tools import BaseTool, StructuredTool, tool
+from langchain.callbacks.manager import (
+    AsyncCallbackManagerForToolRun,
+    CallbackManagerForToolRun,
+)
+from molfeat.calc import FPCalculator
+from molfeat.trans import MoleculeTransformer
 
+
+class SMILESEnergyPredictionTool(BaseTool):
+    name = "SMILES hydration free energy predictor"
+    description = """The calculation of hydration free energy is an important aspect of drug discovery, 
+                    as it helps in understanding how a potential drug molecule interacts with water, which is crucial 
+                    for its absorption, distribution, metabolism, and excretion (ADME) properties."""
+    model: AutoSklearnRegressor
+    
+    def __init__(self, model_path: str) -> None:
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model file not found at {model_path}")
+        with open(model_path, "rb") as f:
+            model:AutoSklearnRegressor = pickle.load(f)
+        super().__init__(model=model)
+
+    def _run(
+        self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None
+    ) -> str:   
+        calc = FPCalculator("ecfp")
+        input_x = pd.DataFrame(calc(query)[None,:])
+        input_x.columns = [f"{i}" for i in range(input_x.shape[1])]
+        return self.model.predict(input_x)[0]
+
+    async def _arun(
+        self, query: str, run_manager: Optional[AsyncCallbackManagerForToolRun] = None
+    ) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("custom_search does not support async")
 
 class QaAgent:
     """
@@ -65,7 +104,7 @@ class QaAgent:
         return response["answer"]
 
 
-class SmilesFilterAgent:
+class SmilesFilter:
     """A class for filtering SMILES strings."""
 
     def __init__(self):
