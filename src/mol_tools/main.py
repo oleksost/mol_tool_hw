@@ -22,7 +22,7 @@ if __name__ == "__main__":
         "Can you list the small molecule drugs they highlight in the paper?",
     ]
     qa = QaAgent(
-        docs, llm, embeddings_provider, vector_path="storage/PMC8264982_10.faiss"
+        docs, llm, embeddings_provider, vector_path="storage/PMC8264982.faiss"
     )
     for q in questions:
         print("Question:", q, "\n Answer:", qa.answer(q))

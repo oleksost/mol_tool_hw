@@ -9,7 +9,7 @@ from langchain.chains import create_retrieval_chain
 import backoff
 from rdkit import Chem
 import concurrent.futures
-from typing import Optional, Type
+from typing import Optional, Type, Callable
 from autosklearn.regression import AutoSklearnRegressor
 from langchain.tools import BaseTool, StructuredTool, tool
 from langchain.callbacks.manager import (
@@ -19,6 +19,7 @@ from langchain.callbacks.manager import (
 from molfeat.calc import FPCalculator
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 import logging
+from mol_tools.models import Model
 
 
 class SMILESEnergyPredictionTool(BaseTool):
@@ -41,7 +42,7 @@ class SMILESEnergyPredictionTool(BaseTool):
     description = """The calculation of hydration free energy is an important aspect of drug discovery, 
                     as it helps in understanding how a potential drug molecule interacts with water, which is crucial 
                     for its absorption, distribution, metabolism, and excretion (ADME) properties."""
-    model: AutoSklearnRegressor
+    model: Model
 
     def __init__(self, model_path: str) -> None:
         """
@@ -56,7 +57,7 @@ class SMILESEnergyPredictionTool(BaseTool):
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found at {model_path}")
         with open(model_path, "rb") as f:
-            model: AutoSklearnRegressor = pickle.load(f)
+            model = pickle.load(f)
         super().__init__(model=model)
 
     def _run(
