@@ -1,10 +1,11 @@
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_openai import OpenAIEmbeddings
-from agents import QaAgent, SmilesFilter, SMILESEnergyPredictionTool
+from tools import QaAgent, SmilesFilter, SMILESEnergyPredictionTool
 from langchain_openai import ChatOpenAI
 from dotenv import find_dotenv, load_dotenv
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     dotenv_path = find_dotenv()
     load_dotenv(dotenv_path)
 

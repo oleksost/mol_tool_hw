@@ -17,10 +17,26 @@ from langchain.callbacks.manager import (
     CallbackManagerForToolRun,
 )
 from molfeat.calc import FPCalculator
-from molfeat.trans import MoleculeTransformer
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+import logging
 
 
 class SMILESEnergyPredictionTool(BaseTool):
+    """
+    A tool for predicting the hydration free energy of drug molecules based on their SMILES representation.
+
+    Attributes:
+        name (str): The name of the tool.
+        description (str): A description of the tool and its purpose.
+        model (AutoSklearnRegressor): The machine learning model used for prediction.
+
+    Methods:
+        __init__(self, model_path: str) -> None: Initializes the tool with a trained model.
+        _run(self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None) -> str: Runs the tool synchronously.
+        _preprocess(self, query: str) -> str: Preprocesses the input query.
+        _arun(self, query: str, run_manager: Optional[AsyncCallbackManagerForToolRun] = None) -> str: Runs the tool asynchronously.
+    """
+
     name = "SMILES hydration free energy predictor"
     description = """The calculation of hydration free energy is an important aspect of drug discovery, 
                     as it helps in understanding how a potential drug molecule interacts with water, which is crucial 
@@ -28,6 +44,15 @@ class SMILESEnergyPredictionTool(BaseTool):
     model: AutoSklearnRegressor
 
     def __init__(self, model_path: str) -> None:
+        """
+        Initializes the SMILESEnergyPredictionTool with a trained model.
+
+        Args:
+            model_path (str): The path to the trained model file.
+
+        Raises:
+            FileNotFoundError: If the model file is not found at the specified path.
+        """
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found at {model_path}")
         with open(model_path, "rb") as f:
@@ -37,15 +62,53 @@ class SMILESEnergyPredictionTool(BaseTool):
     def _run(
         self, query: str, run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
+        """
+        Runs the SMILESEnergyPredictionTool synchronously.
+
+        Args:
+            query (str): The input query in SMILES format.
+            run_manager (Optional[CallbackManagerForToolRun]): The callback manager for tool run events.
+
+        Returns:
+            str: The predicted hydration free energy.
+
+        """
+        input_x = self._preprocess(query)
+        return self.model.predict(input_x)[0]
+
+    def _preprocess(self, query: str) -> str:
+        """
+        Preprocesses the input query.
+
+        Args:
+            query (str): The input query in SMILES format.
+
+        Returns:
+            str: The preprocessed input.
+
+        """
         calc = FPCalculator("ecfp")
         input_x = pd.DataFrame(calc(query)[None, :])
         input_x.columns = [f"{i}" for i in range(input_x.shape[1])]
-        return self.model.predict(input_x)[0]
-
+        return input_x
+    
     async def _arun(
         self, query: str, run_manager: Optional[AsyncCallbackManagerForToolRun] = None
     ) -> str:
-        """Use the tool asynchronously."""
+        """
+        Runs the SMILESEnergyPredictionTool asynchronously.
+
+        Args:
+            query (str): The input query in SMILES format.
+            run_manager (Optional[AsyncCallbackManagerForToolRun]): The callback manager for tool run events.
+
+        Returns:
+            str: The predicted hydration free energy.
+
+        Raises:
+            NotImplementedError: This method does not support asynchronous execution.
+
+        """
         raise NotImplementedError("custom_search does not support async")
 
 
@@ -76,19 +139,43 @@ class QaAgent:
             self.vector = FAISS.from_documents(documents, embedding=embeddings_provider)
             if vector_path:
                 self.vector.save_local(vector_path)
-
-        prompt_template = """Answer the following question based only on the provided context:
+                
+        retriever_chain = self.vector.as_retriever()
+        
+        prompt_template = """Answer the following question based only on the following context:
                             <context>
                             {context}
                             </context>
                             Question: {input}"""
-        prompt = ChatPromptTemplate.from_template(prompt_template)
+        qa_prompt = ChatPromptTemplate.from_template(prompt_template)
+        
+        
+        # if we wanted to build a chatbot here, we could use MessagesPlaceholder in the qa prompt
+        # but we dont realy need to do that here
+        # SYSTEM_TEMPLATE = """
+        # Answer the user's questions based on the below context. 
+        # If the context doesn't contain any relevant information to the question, don't make something up and just say "I don't know":
 
-        self.chain = create_stuff_documents_chain(
-            llm, prompt
+        # <context>
+        # {context}
+        # </context>
+        # """
+        # qa_prompt = ChatPromptTemplate.from_messages(
+        #     [
+        #         (
+        #             "system",
+        #             SYSTEM_TEMPLATE,
+        #         ),
+        #         MessagesPlaceholder(variable_name="input"),
+        #     ]
+        # )
+        qa_chain = create_stuff_documents_chain(
+            llm, qa_prompt
         )  # chain the LLM to the prompt
-        retriever = self.vector.as_retriever()
-        self.retrieval_chain = create_retrieval_chain(retriever, self.chain)
+        # could also use langchain.chains.qstion_answering.load_qa_chain
+        # it would have a predefined prompt template
+        retriever_chain = self.vector.as_retriever()
+        self.qa_chain_w_retriver = create_retrieval_chain(retriever_chain, qa_chain)
 
     def answer(self, question):
         """
@@ -100,7 +187,7 @@ class QaAgent:
         Returns:
             str: The answer to the question.
         """
-        response = self.retrieval_chain.invoke({"input": question})
+        response = self.qa_chain_w_retriver.invoke({"input": question})
         return response["answer"]
 
 
@@ -123,8 +210,11 @@ class SmilesFilter:
         Returns:
             list: A list of valid SMILES strings.
         """
-        tokens = text.split()
+        tokens = text.split(" ")
+        # remove all tokens that are numeric of only one character
+        tokens = [token for token in tokens if not token.isnumeric() and len(token) > 1]        
         smiles_tokens = []
+        logging.info(f"Processing {len(tokens)} tokens")
 
         # Use a multiprocessing pool to process tokens in parallel
         with concurrent.futures.ProcessPoolExecutor() as executor:

@@ -2,10 +2,10 @@ import pytest
 from langchain.llms.fake import FakeListLLM
 from langchain_community.embeddings import FakeEmbeddings
 from langchain_community.document_loaders import WebBaseLoader
+from src.mol_tools.tools import SmilesFilter, QaAgent
 
 
 def test_qa_agent():
-    from agents import QaAgent
 
     llm = FakeListLLM(name="fakeGPT", responses=["I am fine, thank you!"])
 
@@ -20,7 +20,6 @@ def test_qa_agent():
 
 
 def test_smiles_filter_agent():
-    from agents import SmilesFilter
 
     smiles_filter = SmilesFilter()
     smiles_tokens = smiles_filter.filter("blabla bla ADFAD C1=CC=CC=C1")

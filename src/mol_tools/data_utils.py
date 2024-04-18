@@ -1,13 +1,9 @@
 import os
 import datamol as dm
-import torch
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from molfeat.calc import FPCalculator
 from molfeat.trans import MoleculeTransformer
-from autosklearn.regression import AutoSklearnRegressor
-from sklearn.metrics import mean_absolute_error, roc_auc_score
-
 smiles_column = "smiles"
 
 
@@ -34,7 +30,7 @@ def _preprocess(row):
     return row
 
 
-def get_data(dest="storage/_freesolv_encoded.csv"):
+def get_freesolv_data(dest="storage/_freesolv_encoded.csv"):
     if os.path.exists(dest):
         data = pd.read_csv(dest)
         X_encoded, y = data.drop("expt", axis=1), data["expt"]
@@ -54,38 +50,3 @@ def get_data(dest="storage/_freesolv_encoded.csv"):
 
     X_train, X_test, y_train, y_test = train_test_split(X_encoded, y, random_state=0)
     return X_train, X_test, y_train, y_test
-
-
-def main(model_path="storage/_autosklearn_model.pkl"):
-    X_train, X_test, y_train, y_test = get_data()
-    print(
-        "train sahpes:",
-        X_train.shape,
-        y_train.shape,
-        "\n Test shapes:",
-        X_test.shape,
-        y_test.shape,
-    )
-
-    automl = AutoSklearnRegressor(
-        memory_limit=24576,
-        # For practicality’s sake, limit this to 5 minutes!
-        # (x3 = 15 min in total)
-        time_left_for_this_task=180,
-        n_jobs=1,
-        seed=1,
-    )
-    automl.fit(X_train, y_train)
-    y_hat = automl.predict(X_test)
-    mae = mean_absolute_error(y_test, y_hat)
-    print("MAE:", mae)
-    # save the model with pickle
-    import pickle
-
-    with open(model_path, "wb") as f:
-        pickle.dump(automl, f)
-    print("Model saved at:", model_path)
-
-
-if __name__ == "__main__":
-    main()

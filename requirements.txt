@@ -1,5 +1,6 @@
 rdkit
 bs4
+pypdf
 langchain
 langchain_openai
 datamol
@@ -8,3 +9,4 @@ auto-sklearn
 backoff
 faiss-cpu
 python-dotenv
+pytest
