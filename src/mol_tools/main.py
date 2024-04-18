@@ -3,6 +3,7 @@ from langchain_openai import OpenAIEmbeddings
 from tools import QaAgent, SmilesFilter, SMILESEnergyPredictionTool
 from langchain_openai import ChatOpenAI
 from dotenv import find_dotenv, load_dotenv
+import logging
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
