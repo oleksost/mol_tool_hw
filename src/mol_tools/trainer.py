@@ -20,7 +20,7 @@ def train(X_train, y_train, model="AutoSklearnRegressor", model_path="storage/")
     model_path = os.path.join(model_path, f"_{model}.pkl")
     logging.info(f"Data loaded with {X_train.shape[0]} samples")
     assert model in MODELS, f"Model {model} not found in MODELS"
-    model: Model = MODELS[model](random_state=0)
+    model: Model = MODELS[model]()
     logging.info(f"Training {model.__class__} model")
 
     model.fit(X_train, y_train)
