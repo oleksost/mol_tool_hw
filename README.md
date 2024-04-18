@@ -1,9 +1,12 @@
 ## Installation
 
 ```bash
-conda create --name vllns python=3.9
+conda create --name my_env python=3.9
+conda activate my_env
 git clone https://github.com/oleksost/mol_tool_hw.git
 cd mol_tool_hw
+touch .env
+echo OPENAI_API_KEY=\"YOUR OPEN AI KEY\" >> .env
 pip install -e .
 ```
 
