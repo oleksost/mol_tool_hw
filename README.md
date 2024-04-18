@@ -1,6 +1,7 @@
 ## Installation
 
 ```bash
+conda create --name vllns python=3.9
 git clone https://github.com/oleksost/mol_tool_hw.git
 cd mol_tool_hw
 pip install -e .
