@@ -33,4 +33,4 @@ Currently the code supports 4 model types, all implemented using sklear library:
 
 All models are implemented in [src/mol_tools/models.py](https://github.com/oleksost/mol_tool_hw/blob/main/src/mol_tools/models.py).
 
-Adding model: new models can added to [src/mol_tools/models.py](https://github.com/oleksost/mol_tool_hw/blob/main/src/mol_tools/models.py) file by subclassing the Model class. Use `register_model` decorator for each new model class.
+**Adding model**: new models can added to [src/mol_tools/models.py](https://github.com/oleksost/mol_tool_hw/blob/main/src/mol_tools/models.py) file by subclassing the Model class. Use `register_model` decorator for each new model class.
