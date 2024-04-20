@@ -2,7 +2,7 @@ import pytest
 from langchain.llms.fake import FakeListLLM
 from langchain_community.embeddings import FakeEmbeddings
 from langchain_community.document_loaders import WebBaseLoader
-from src.mol_tools.tools import SmilesFilter, QaAgent
+from src.mol_tools.tools import SmilesFilter, QaAgent, RetriverTool
 
 
 def test_qa_agent():
@@ -11,9 +11,13 @@ def test_qa_agent():
 
     embeddings_provider = FakeEmbeddings(size=10)
     loader = WebBaseLoader("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8264982/")
-    docs = loader.load()  # load parse text
+    docs = loader.load()  # load parse text    
 
-    qa = QaAgent(docs, llm, embeddings_provider)
+    retriever_tool = RetriverTool(
+        docs, embeddings_provider, doc_limit=1
+    )
+
+    qa = QaAgent(retriever_tool, llm)
     answer = qa.answer("Test question?")
 
     assert answer == "I am fine, thank you!"
