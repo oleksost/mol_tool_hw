@@ -37,11 +37,13 @@ def get_freesolv_data(dest="storage/_freesolv_encoded.csv"):
     else:
         df = dm.data.freesolv()
         # 1. clean the data
+        # from valance portal
         data_clean = df.apply(_preprocess, axis=1)
         data_clean = pd.DataFrame(data_clean)
         X, y = data_clean["standard_smiles"], data_clean["expt"]
         # featurize
         calc = FPCalculator("ecfp")
+        # produce numerical embeddings
         mol_transf = MoleculeTransformer(calc, n_jobs=-1)
         X_encoded = mol_transf(X)
         X_encoded = pd.DataFrame(X_encoded)

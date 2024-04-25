@@ -258,12 +258,13 @@ class SmilesFilter:
             list: A list of valid SMILES strings.
         """
         tokens = text.split(" ")
-        # remove all tokens that are numeric of only one character
+        # remove all tokens that are numeric or only one character
         tokens = [token for token in tokens if not token.isnumeric() and len(token) > 1]
         smiles_tokens = []
         logging.info(f"Processing {len(tokens)} tokens")
 
         # Use a multiprocessing pool to process tokens in parallel
+        # usefull API for distribution tasks across multiple Python processes
         with concurrent.futures.ProcessPoolExecutor() as executor:
             # Map the function over all tokens and filter out None results
             results = executor.map(self._is_valid_smiles, tokens)

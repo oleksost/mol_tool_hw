@@ -46,19 +46,19 @@ class AutoSklearnRegressorModel(AutoSklearnRegressor, Model):
         )
 
 
-@register_model("linear_regression")
-class SkLearnLinearRegression(LinearRegression, Model):
-    def __init__(self,  fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None, positive=False):
-        super().__init__(fit_intercept=fit_intercept, normalize=normalize, copy_X=copy_X,
-                         n_jobs=n_jobs, positive=positive)
+# @register_model("linear_regression")  
+# class SkLearnLinearRegression(LinearRegression, Model):
+#     def __init__(self,  fit_intercept=True, normalize=False, copy_X=True,
+#                  n_jobs=None, positive=False):
+#         super().__init__(fit_intercept=fit_intercept, normalize=normalize, copy_X=copy_X,
+#                          n_jobs=n_jobs, positive=positive)
 
 
-    def fit(self, X, y):
-        super().fit(X, y)
+#     def fit(self, X, y):
+#         super().fit(X, y)
 
-    def predict(self, X):
-        return super().predict(X)
+#     def predict(self, X):
+#         return super().predict(X)
 
 
 @register_model("tree_regression")
